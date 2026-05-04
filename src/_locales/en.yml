@@ -262,6 +262,8 @@ settings:
     username_or_mid: Username / MID
 
   following_tab_show_livestreaming_videos: Show Live-streaming videos in the "Following" tab
+  following_tab_block_users: Block videos from specific creators
+  following_tab_block_users_desc: Hide videos from specific creators in the "Following" tab. Enter the full username or MID.
 
   use_search_page_mode: Use search page mode on homepage
   settings_shared_with_the_search_page: Settings shared with the search page

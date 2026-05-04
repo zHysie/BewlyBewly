@@ -40,6 +40,7 @@ const gridClass = computed((): string => {
 })
 
 const videoList = ref<VideoElement[]>([])
+const blockedBvidSet = ref<Set<string>>(new Set())
 /**
  * Get all livestreaming videos of followed users
  */
@@ -52,6 +53,17 @@ const offset = ref<string>('')
 const updateBaseline = ref<string>('')
 const noMoreContent = ref<boolean>(false)
 const { handleReachBottom, handlePageRefresh, haveScrollbar } = useBewlyApp()
+
+const followingTabUserBlocklist = computed(() => {
+  if (!settings.value.enableFollowingTabUserBlocklist)
+    return []
+
+  return settings.value.followingTabUserBlocklist
+    .map(item => item.keyword.trim())
+    .filter(Boolean)
+})
+
+const displayedVideoList = computed(() => videoList.value.filter(video => !isFollowingTabVideoBlocked(video)))
 
 onMounted(() => {
   initData()
@@ -85,6 +97,7 @@ async function initData() {
   liveVideoList.value.length = 0
   livePage.value = 1
   videoList.value.length = 0
+  blockedBvidSet.value = new Set()
   noMoreContent.value = false
 
   if (settings.value.followingTabShowLivestreamingVideos)
@@ -214,6 +227,9 @@ async function getFollowedUsersVideos() {
             authorFace: item.modules.module_author.face,
             mid: item.modules.module_author.mid,
           }
+          if (isFollowingTabAuthorBlocked(author))
+            markBlockedBvid(currentBvid)
+
           const currentVideo: VideoElement = {
             uniqueId: currentUniqueId,
             bvid: currentBvid,
@@ -262,6 +278,46 @@ function jumpToLoginPage() {
   location.href = 'https://passport.bilibili.com/login'
 }
 
+function isFollowingTabAuthorBlocked(author?: Author): boolean {
+  if (!author)
+    return false
+
+  const name = `${author.name}`.trim().toUpperCase()
+  const mid = `${author.mid}`.trim()
+
+  return followingTabUserBlocklist.value.some((keyword) => {
+    const trimmedKeyword = keyword.trim()
+    return trimmedKeyword.toUpperCase() === name || trimmedKeyword === mid
+  })
+}
+
+function isFollowingTabVideoBlocked(video: VideoElement): boolean {
+  if (!settings.value.enableFollowingTabUserBlocklist)
+    return false
+
+  if (video.bvid && blockedBvidSet.value.has(video.bvid))
+    return true
+
+  const authorList = video.authorList?.length
+    ? video.authorList
+    : video.item
+      ? [{
+          name: video.item.modules.module_author.name,
+          authorFace: video.item.modules.module_author.face,
+          mid: video.item.modules.module_author.mid,
+        }]
+      : []
+
+  return authorList.some(author => isFollowingTabAuthorBlocked(author))
+}
+
+function markBlockedBvid(bvid?: string) {
+  if (!bvid)
+    return
+
+  blockedBvidSet.value = new Set(blockedBvidSet.value).add(bvid)
+}
+
 defineExpose({ initData })
 </script>
 
@@ -304,7 +360,7 @@ defineExpose({ initData })
       </template>
 
       <VideoCard
-        v-for="video in videoList"
+        v-for="video in displayedVideoList"
         :key="video.uniqueId"
         :skeleton="!video.item"
         :video="video.item ? {

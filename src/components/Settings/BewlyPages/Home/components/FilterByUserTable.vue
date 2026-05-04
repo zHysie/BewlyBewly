@@ -3,10 +3,15 @@ import { onKeyStroke } from '@vueuse/core'
 import { useI18n } from 'vue-i18n'
 import { useToast } from 'vue-toastification'
 
-import { settings } from '~/logic'
-
 const { t } = useI18n()
 const toast = useToast()
+
+interface UserFilter {
+  keyword: string
+  remark: string
+}
+
+const filters = defineModel<UserFilter[]>({ required: true })
 
 const addingFilter = ref<{ keyword: string, remark: string }>({ keyword: '', remark: '' })
 const editingFilter = ref<{ keyword: string, remark: string }>({ keyword: '', remark: '' })
@@ -18,7 +23,7 @@ function handleAddFilter() {
   if (!addingFilter.value.keyword.trim())
     return
 
-  const hasDuplicate = settings.value.filterByUser.find(
+  const hasDuplicate = filters.value.find(
     (item, itemIndex) => item.keyword === addingFilter.value.keyword.trim() && itemIndex !== editingIndex.value,
   )
   if (hasDuplicate) {
@@ -27,7 +32,7 @@ function handleAddFilter() {
   }
   addingFilter.value.keyword = addingFilter.value.keyword.trim()
   addingFilter.value.remark = addingFilter.value.remark.trim()
-  settings.value.filterByUser.unshift({ ...addingFilter.value })
+  filters.value.unshift({ ...addingFilter.value })
   nextTick(() => {
     handleClearAddingFilter()
   })
@@ -39,7 +44,7 @@ function handleClearAddingFilter() {
 
 async function handleEditFilter(index: number, focusItem: 'keyword' | 'remark' = 'keyword') {
   editingIndex.value = index
-  editingFilter.value = { ...settings.value.filterByUser[index] }
+  editingFilter.value = { ...filters.value[index] }
   await nextTick()
 
   const inputElement = focusItem === 'keyword' ? keywordRef.value : remarkRef.value
@@ -55,20 +60,22 @@ function handleConfirmFilter(index: number) {
   if (!editingFilter.value.keyword.trim())
     return
 
-  const hasDuplicate = settings.value.filterByUser.find(
+  const hasDuplicate = filters.value.find(
     (item, itemIndex) => item.keyword === editingFilter.value.keyword.trim() && itemIndex !== index,
   )
   if (hasDuplicate) {
-    toast.warning('This title filter already exist!!!')
+    toast.warning(t('settings.filter_item_already_exist'))
     return
   }
-  settings.value.filterByUser[index] = { ...editingFilter.value }
+  editingFilter.value.keyword = editingFilter.value.keyword.trim()
+  editingFilter.value.remark = editingFilter.value.remark.trim()
+  filters.value[index] = { ...editingFilter.value }
   if (index !== -1)
     editingIndex.value = -1
 }
 
 function handleDeleteFilter(index: number) {
-  settings.value.filterByUser.splice(index, 1)
+  filters.value.splice(index, 1)
 }
 
 onKeyStroke('Escape', (e: KeyboardEvent) => {
@@ -126,7 +133,7 @@ onKeyStroke('Escape', (e: KeyboardEvent) => {
       </ListItem>
 
       <ListItem
-        v-for="(item, index) in settings.filterByUser" :key="item.keyword"
+        v-for="(item, index) in filters" :key="item.keyword"
         :style="{
           background: editingIndex === index ? 'var(--bew-theme-color-20) !important' : '',
         }"

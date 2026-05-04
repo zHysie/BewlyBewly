@@ -256,6 +256,8 @@ settings:
     username_or_mid: 用戶名 / MID
 
   following_tab_show_livestreaming_videos: 喺「跟緊啲人」入邊顯示實況直播
+  following_tab_block_users: 封鎖指定 UP 主嘅影片
+  following_tab_block_users_desc: 喺「跟緊啲人」入邊隱藏指定 UP 主發布嘅影片。請輸入完整用戶名或者 MID。
 
   use_search_page_mode: 主頁使用搵嘢頁模式
   settings_shared_with_the_search_page: 同搵嘢頁共用嘅設定

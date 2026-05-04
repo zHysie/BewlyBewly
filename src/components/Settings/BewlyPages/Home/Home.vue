@@ -360,7 +360,7 @@ function handleToggleHomeTab(tab: any) {
               </Button>
             </div>
 
-            <FilterByUserTable />
+            <FilterByUserTable v-model="settings.filterByUser" />
           </template>
         </SettingsItem>
       </div>
@@ -369,6 +369,16 @@ function handleToggleHomeTab(tab: any) {
     <SettingsItemGroup :title="$t('settings.group_following')">
       <SettingsItem :title="$t('settings.following_tab_show_livestreaming_videos')">
         <Radio v-model="settings.followingTabShowLivestreamingVideos" />
+      </SettingsItem>
+      <SettingsItem
+        class="unrestricted-width-settings-item"
+        :title="$t('settings.following_tab_block_users')"
+        :desc="$t('settings.following_tab_block_users_desc')"
+      >
+        <Radio v-model="settings.enableFollowingTabUserBlocklist" />
+        <template v-if="settings.enableFollowingTabUserBlocklist" #bottom>
+          <FilterByUserTable v-model="settings.followingTabUserBlocklist" />
+        </template>
       </SettingsItem>
     </SettingsItemGroup>
 

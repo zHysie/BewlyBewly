@@ -4,6 +4,9 @@ import { LanguageType } from '~/enums/appEnums'
 import { accessKey, settings } from '~/logic'
 import { getUserID, injectCSS } from '~/utils/main'
 
+const recommendedFontFamily = `CJKEmDash, Numbers, Onest, ShangguSansSCVF, -apple-system, BlinkMacSystemFont, InterVariable, Inter, "Segoe UI", Cantarell, "Noto Sans", "Roboto Flex", Roboto, sans-serif, ui-sans-serif, system-ui, "Apple Color Emoji", "Twemoji Mozilla", "Noto Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", emoji`
+const simplifiedChineseFontFamily = `CJKEmDash, Numbers, Onest, "Microsoft YaHei", "微软雅黑", "Microsoft JhengHei", "PingFang SC", "Noto Sans CJK SC", "Noto Sans SC", -apple-system, BlinkMacSystemFont, InterVariable, Inter, "Segoe UI", Cantarell, "Noto Sans", "Roboto Flex", Roboto, sans-serif, ui-sans-serif, system-ui, "Apple Color Emoji", "Twemoji Mozilla", "Noto Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", emoji`
+
 export function setupNecessarySettingsWatchers() {
   const { locale } = useI18n()
 
@@ -45,6 +48,8 @@ export function setupNecessarySettingsWatchers() {
       else {
         document.documentElement.lang = 'en'
       }
+
+      updateLanguageFontFamily()
     },
     { immediate: true },
   )
@@ -57,8 +62,7 @@ export function setupNecessarySettingsWatchers() {
 
       // Set the default font family
       if (!settings.value.fontFamily && settings.value.customizeFont !== 'custom') {
-        /* Do not wrap following line */
-        settings.value.fontFamily = `CJKEmDash, Numbers, Onest, ShangguSansSCVF, -apple-system, BlinkMacSystemFont, InterVariable, Inter, "Segoe UI", Cantarell, "Noto Sans", "Roboto Flex", Roboto, sans-serif, ui-sans-serif, system-ui, "Apple Color Emoji", "Twemoji Mozilla", "Noto Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", emoji`
+        settings.value.fontFamily = recommendedFontFamily
       }
 
       // Remove the custom fonts first
@@ -75,7 +79,15 @@ export function setupNecessarySettingsWatchers() {
         document.documentElement.classList.add('modify-fonts')
         document.documentElement.style.setProperty('--bew-custom-fonts', settings.value.fontFamily)
       }
+
+      updateLanguageFontFamily()
     },
+    { immediate: true },
+  )
+
+  watch(
+    () => document.querySelector('#bewly'),
+    () => updateLanguageFontFamily(),
     { immediate: true },
   )
 
@@ -284,4 +296,18 @@ export function setupNecessarySettingsWatchers() {
     },
     { immediate: true },
   )
+}
+
+function updateLanguageFontFamily() {
+  const bewlyElement = document.querySelector('#bewly') as HTMLElement | null
+  const shouldUseSimplifiedChineseFont = settings.value.customizeFont === 'recommend' && settings.value.language === LanguageType.Mandarin_CN
+
+  if (shouldUseSimplifiedChineseFont) {
+    document.documentElement.style.setProperty('--bew-fonts-basic', simplifiedChineseFontFamily)
+    bewlyElement?.style.setProperty('--bew-fonts-basic', simplifiedChineseFontFamily)
+  }
+  else {
+    document.documentElement.style.removeProperty('--bew-fonts-basic')
+    bewlyElement?.style.removeProperty('--bew-fonts-basic')
+  }
 }
